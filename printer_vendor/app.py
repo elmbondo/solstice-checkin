@@ -1,19 +1,46 @@
-from flask import Flask, request, jsonify
+import pika
+import os
+import json
 import time
+import requests
+import threading
 
-app = Flask(__name__)
+QUEUE_NAME = "print_requests"
+KIOSK_WEBHOOK_URL = "http://127.0.0.1:6002/webhook/print-complete"
 
-@app.route("/print", methods=["POST"])
-def print_badge():
-    data = request.get_json()
-    attendee_id = data.get("attendee_id")
-    if not attendee_id:
-        return jsonify({"error": "attendee_id required"}), 400
+def handle_print_job(ch, method, properties, body):
+    data = json.loads(body)
+    attendee_id = data["attendee_id"]
+    print_id = data["print_id"]
 
-    time.sleep(2)  # pretend the printer is slow
+    print("printing badge for", attendee_id)
+    time.sleep(2)  # still pretending the printer is slow
 
-    print("printed:", attendee_id)
-    return jsonify({"status": "success", "attendee_id": attendee_id})
+    payload = {
+        "event": "print.completed",
+        "print_id": print_id,
+        "attendee_id": attendee_id,
+        "status": "success",
+        "printed_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
+    }
+
+    try:
+        requests.post(KIOSK_WEBHOOK_URL, json=payload, timeout=5)
+    except requests.RequestException as e:
+        print("webhook call failed:", e)
+
+    ch.basic_ack(delivery_tag=method.delivery_tag)
+
+def start_consuming():
+    params = pika.URLParameters(os.environ.get("AMQP_URL"))
+    connection = pika.BlockingConnection(params)
+    channel = connection.channel()
+    channel.queue_declare(queue=QUEUE_NAME)
+    channel.basic_qos(prefetch_count=1)
+    channel.basic_consume(queue=QUEUE_NAME, on_message_callback=handle_print_job)
+
+    print("waiting for print jobs...")
+    channel.start_consuming()
 
 if __name__ == "__main__":
-    app.run(port=6001, debug=True)
+    start_consuming()
