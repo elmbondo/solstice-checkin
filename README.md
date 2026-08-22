@@ -20,5 +20,5 @@ Meridian Pivot sprint (PLP), Solstice Events Co. scenario.
 4. Terminal 2: `cd checkin_kiosk && python app.py`
 5. POST to `http://127.0.0.1:6002/checkin` with JSON body `{"attendee_id": "ATT-001"}`
 
-**History
+**History**
 This service originally called the printer vendor synchronously and waited for a success response before confirming check-in. The vendor deprecated that synchronous API, forcing a pivot to an async, queue-and-webhook model. See `SCOPE_DELTA.md` for the full breakdown of what changed.
