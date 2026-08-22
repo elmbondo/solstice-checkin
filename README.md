@@ -21,4 +21,4 @@ Meridian Pivot sprint (PLP), Solstice Events Co. scenario.
 5. POST to `http://127.0.0.1:6002/checkin` with JSON body `{"attendee_id": "ATT-001"}`
 
 **History**
-This service originally called the printer vendor synchronously and waited for a success response before confirming check-in. The vendor deprecated that synchronous API, forcing a pivot to an async, queue-and-webhook model. See `SCOPE_DELTA.md` for the full breakdown of what changed.
+This service originally called the printer vendor synchronously and waited for a success response before confirming check-in. The vendor deprecated that synchronous API, forcing a pivot to an async, queue-and-webhook model. See `Scope_Delta_Analysis.docx` for the full breakdown of what changed.
